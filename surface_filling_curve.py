@@ -11,8 +11,8 @@ from preprocess import preprocess
 
 def surface_filling_curve(
         data: npt.NDArray,
-        lat: npt.NDArray = None,
-        lon: npt.NDArray = None,
+        y: npt.NDArray = None,
+        x: npt.NDArray = None,
         missing_pixel_code: float = np.nan,
         invalid_pixel_code: float = np.inf,
         verbose: bool = False
@@ -21,8 +21,8 @@ def surface_filling_curve(
     Fits a context-dependent surface filling curve to a dataset
 
     :param data: 2D matrix of data (e.g. elevation), size nr * nc
-    :param lat: nr array of latitudes
-    :param lon: nc array of longitudes
+    :param y: nr array of y-coordinates
+    :param x: nc array of x-coordinates
     :param missing_pixel_code: value assigned to missing data pixels
     :param invalid_pixel_code: value assigned to invalid pixels
     :param verbose: log to console?
@@ -38,26 +38,26 @@ def surface_filling_curve(
             "Data matrix is too small, must be at least 6x6")
 
     real_coordinates = True
-    if lat is None:
-        lat = np.arange(data.shape[0])
+    if y is None:
+        y = np.arange(data.shape[0])
         real_coordinates = False
-    elif data.shape[0] != len(lat):
+    elif data.shape[0] != len(y):
         raise ValueError(
-            "n_row(data) should match length(lat)")
+            "n_row(data) should match length(y)")
 
-    if lon is None:
-        lon = np.arange(data.shape[1])
+    if x is None:
+        x = np.arange(data.shape[1])
         real_coordinates = False
-    elif data.shape[1] != len(lon):
+    elif data.shape[1] != len(x):
         raise ValueError(
-            "n_col(data) should match length(lon)")
+            "n_col(data) should match length(x)")
 
     proc_data, missing_mask, invalid_mask = preprocess(
         raw_data=data,
         invalid_pixel_code=invalid_pixel_code,
         missing_pixel_code=missing_pixel_code,
         verbose=verbose)
-    dual = make_dual(data=proc_data, lat=lat, lon=lon, verbose=verbose)
+    dual = make_dual(data=proc_data, y=y, x=x, verbose=verbose)
     connectivity_matrix = make_connectivity_matrix(dual=dual, verbose=verbose)
     spath = make_path(connectivity_matrix=connectivity_matrix, verbose=verbose)
 
@@ -66,8 +66,8 @@ def surface_filling_curve(
         "missing_mask": missing_mask,
         "invalid_mask": invalid_mask,
         "data": proc_data,
-        "lat": lat,
-        "lon": lon,
+        "y": y,
+        "x": x,
         "connectivity_matrix": connectivity_matrix,
         "path": spath,
         "missing_pixel_code": missing_pixel_code,
@@ -79,16 +79,16 @@ def surface_filling_curve(
 
 def make_coarse_data(
         data: npt.NDArray,
-        lat: npt.NDArray,
-        lon: npt.NDArray,
+        y: npt.NDArray,
+        x: npt.NDArray,
         verbose: bool
 ) -> Dict:
     """
     Build a coarser dataset
 
     :param data: 2D matrix of data (e.g. elevation), size nr * nc
-    :param lat: nr array of latitudes
-    :param lon: nc array of longitudes
+    :param y: nr array of y-coordinates
+    :param x: nc array of x-coordinates
     :param verbose: log to console?
     :return: coarser dataset
     """
@@ -96,32 +96,32 @@ def make_coarse_data(
         print("Building coarser gridded dataset")
 
     nr, nc = data.shape
-    res = abs(lat[1] - lat[0])
-    c_lat = np.linspace(np.max(lat) - res / 2,
-                        np.min(lat) + res / 2,
-                        int(len(lat) / 2))
-    c_lon = np.linspace(np.min(lon) + res / 2,
-                        np.max(lon) - res / 2,
-                        int(len(lon) / 2))
+    res = abs(y[1] - y[0])
+    c_y = np.linspace(np.max(y) - res / 2,
+                      np.min(y) + res / 2,
+                      int(len(y) / 2))
+    c_x = np.linspace(np.min(x) + res / 2,
+                      np.max(x) - res / 2,
+                      int(len(x) / 2))
     c_data = np.transpose(
         [[safe_nan_mean(data[(i * 2):((i + 1) * 2), (j * 2):((j + 1) * 2)])
           for i in np.arange(int(np.floor(nr / 2)))]
             for j in np.arange(int(np.floor(nc / 2)))])
-    coarse = {"data": c_data, "lat": c_lat, "lon": c_lon}
+    coarse = {"data": c_data, "y": c_y, "x": c_x}
     if verbose:
         print("Coarse dataset built.")
     return coarse
 
 
-def enforce_m(x: Any) -> csc_matrix:
+def enforce_m(u: Any) -> csc_matrix:
     """
     Forces a user-provided matrix to be of type sparseMatrix
 
-    :param x: User matrix
+    :param u: User matrix
     :return: sparseMatrix
     """
-    if not issparse(x):
-        m = np.array(x)
+    if not issparse(u):
+        m = np.array(u)
         nr, nc = m.shape
         xx = np.transpose(m).ravel()
         i = np.tile(np.arange(nr), nc)
@@ -130,38 +130,38 @@ def enforce_m(x: Any) -> csc_matrix:
         i = i[crit]
         j = j[crit]
         xx = xx[crit]
-        x = csc_matrix((xx, (i, j)), shape=(nr, nc))
-    return x
+        u = csc_matrix((xx, (i, j)), shape=(nr, nc))
+    return u
 
 
-def get_column(x: csc_matrix, col_id: int) -> Tuple[npt.NDArray, npt.NDArray]:
+def get_column(m: csc_matrix, col_id: int) -> Tuple[npt.NDArray, npt.NDArray]:
     """
     Fetches one column of a sparse matrix
 
-    :param x: sparse matrix
+    :param m: sparse matrix
     :param col_id: ID of column
     :return: non-empty rows and non-zero values
     """
 
-    st = x.indptr[col_id]
-    en = x.indptr[col_id + 1]
-    return x.indices[st:en], x.data[st:en]
+    st = m.indptr[col_id]
+    en = m.indptr[col_id + 1]
+    return m.indices[st:en], m.data[st:en]
 
 
 def get_col_max(
-        x: csc_matrix,
+        m: csc_matrix,
         cols: npt.NDArray[int]
 ) -> npt.NDArray:
     """
     Computes max and which_max for columns of a sparse matrix
 
-    :param x: sparse matrix
+    :param m: sparse matrix
     :param cols: column IDs
     :return: 2 * len(cols) matrix with max and which_max
     """
     arr = []
     for col_id in cols:
-        col_i, col_x = get_column(x=x, col_id=col_id)
+        col_i, col_x = get_column(m=m, col_id=col_id)
         if len(col_x) > 0:
             idx = np.argmax(col_x)
             arr.append([col_x[idx], col_i[idx]])
@@ -250,7 +250,7 @@ def get_similarity_matrix(
     :param data: NxM matrix with gridded data
     :param neighbors: neighborhood structure of dual graph
     :param verbose: log to console?
-    :return: (NxM) x (NxM) sparse similarity matrix
+    :return: (NxM) * (NxM) sparse similarity matrix
     """
     if data.shape[0] % 2 == 1 or data.shape[1] % 2 == 1:
         raise ValueError("data must have even number of rows and columns")
@@ -309,11 +309,11 @@ def get_similarity_matrix(
     s = {
         "i": np.array(neighbors["new_id"])[i],
         "j": np.array(neighbors["new_id"])[j],
-        "x": inv_dist,
+        "v": inv_dist,
         "nr": sim_nr,
         "nc": sim_nr
     }
-    similarity_matrix = csc_matrix((s["x"], (s["i"], s["j"])),
+    similarity_matrix = csc_matrix((s["v"], (s["i"], s["j"])),
                                    shape=(s["nr"], s["nc"]))
     return similarity_matrix
 
@@ -346,23 +346,23 @@ def _make_minimum_spanning_numba(
         sm_i[col_id].pop(k)
         sm_x[col_id].pop(k)
 
-    # finds max(x) and i -> max(x), for each column of similarity matrix
-    max_x = []
+    # finds max(m) and i -> max(m), for each column of similarity matrix
+    max_m = []
     max_i = []
     for col_id in np.arange(nr):
         col_i = sm_i[col_id]
-        col_x = sm_x[col_id]
-        if len(col_x) > 0:
-            mx = max(col_x)
-            max_x.append(mx)
-            max_i.append(col_i[col_x.index(mx)])
+        col_m = sm_x[col_id]
+        if len(col_m) > 0:
+            mx = max(col_m)
+            max_m.append(mx)
+            max_i.append(col_i[col_m.index(mx)])
         else:
-            max_x.append(0)
+            max_m.append(0)
             max_i.append(col_id)
     max_i = np.array(max_i)
-    max_x = np.array(max_x)
+    max_m = np.array(max_m)
 
-    def get_x(i, j):
+    def get_m(i, j):
         # fetches similarity_matrix[i, j] if not 0
         try:
             out = sm_x[j][sm_i[j].index(i)]
@@ -371,11 +371,11 @@ def _make_minimum_spanning_numba(
         return out
 
     for _ in range(nr - 1):
-        m = max_x[tree_arr]
+        m = max_m[tree_arr]
         index_j = tree_arr[np.argmax(m)]
         index_i = max_i[index_j]
         for col_id in tree_arr:
-            if get_x(index_i, col_id) != 0:
+            if get_m(index_i, col_id) != 0:
                 try:
                     k = sm_i[col_id].index(index_i)
                     sm_i[col_id].pop(k)
@@ -393,16 +393,16 @@ def _make_minimum_spanning_numba(
         tree_arr = np.array(tree)
         alt_tree.append(index_j)
 
-        # update max(x) and i -> max(x), for relevant columns of similarity mat
+        # update max(m) and i -> max(m), for relevant columns of similarity mat
         for col_id in tree_arr:
             col_i = sm_i[col_id]
-            col_x = sm_x[col_id]
-            if len(col_x) > 0:
-                mx = max(col_x)
-                max_x[col_id] = mx
-                max_i[col_id] = col_i[col_x.index(mx)]
+            col_m = sm_x[col_id]
+            if len(col_m) > 0:
+                mx = max(col_m)
+                max_m[col_id] = mx
+                max_i[col_id] = col_i[col_m.index(mx)]
             else:
-                max_x[col_id] = 0
+                max_m[col_id] = 0
                 max_i[col_id] = col_id
 
     tree = tree_arr[1:nr]
@@ -434,31 +434,31 @@ def make_minimum_spanning_tree(
     w = {
         "i": np.concatenate([tree, alt_tree], axis=0),
         "j": np.concatenate([alt_tree, tree], axis=0),
-        "x": np.ones(2 * (nr - 1), dtype=np.int32),
+        "v": np.ones(2 * (nr - 1), dtype=np.int32),
         "nr": nr,
         "nc": nr
     }
     if verbose:
         print("MST done")
-    return csc_matrix((w["x"], (w["i"], w["j"])), shape=(w["nr"], w["nc"]))
+    return csc_matrix((w["v"], (w["i"], w["j"])), shape=(w["nr"], w["nc"]))
 
 
 def make_dual(
         data: npt.NDArray,
-        lat: npt.NDArray,
-        lon: npt.NDArray,
+        y: npt.NDArray,
+        x: npt.NDArray,
         verbose: bool
 ) -> Dict:
     """
     Compute the dual graph object
 
     :param data: 2D matrix of data (e.g. elevation), size nr * nc
-    :param lat: nr array of latitudes
-    :param lon: nc array of longitudes
+    :param y: nr array of y-coordinates
+    :param x: nc array of x-coordinates
     :param verbose: log to console?
     :return: dict of dual object
     """
-    coarse = make_coarse_data(data=data, lat=lat, lon=lon, verbose=verbose)
+    coarse = make_coarse_data(data=data, y=y, x=x, verbose=verbose)
     neighbors = get_neighbors(mat=coarse["data"], verbose=verbose)
     similarity_matrix = get_similarity_matrix(data=data,
                                               neighbors=neighbors,
@@ -467,8 +467,8 @@ def make_dual(
                                          verbose=verbose)
     dual = {
         "data": coarse["data"],
-        "lat": coarse["lat"],
-        "lon": coarse["lon"],
+        "y": coarse["y"],
+        "x": coarse["x"],
         "neighbors": neighbors,
         "similarity_matrix": similarity_matrix,
         "ms_tree": ms_tree
@@ -492,8 +492,8 @@ def make_connectivity_matrix(
 
     neighbors = dual["neighbors"]
     ms_tree = dual["ms_tree"]
-    nr = len(dual["lat"])
-    nc = len(dual["lon"])
+    nr = len(dual["y"])
+    nc = len(dual["x"])
     nr2 = 2 * nr
     nc2 = 2 * nc
 
@@ -566,17 +566,17 @@ def make_connectivity_matrix(
     c = {
         "i": links[:, 0],
         "j": links[:, 1],
-        "x": np.ones(links.shape[0]),
+        "v": np.ones(links.shape[0]),
         "nr": nr2 * nc2,
         "nc": nr2 * nc2
     }
-    return csc_matrix((c["x"], (c["i"], c["j"])), shape=(c["nr"], c["nc"]))
+    return csc_matrix((c["v"], (c["i"], c["j"])), shape=(c["nr"], c["nc"]))
 
 
-def get_j(x: csc_matrix):
+def get_j(m: csc_matrix):
     j = []
-    for c in range(x.shape[1]):
-        j.extend([c] * (x.indptr[c + 1] - x.indptr[c]))
+    for c in range(m.shape[1]):
+        j.extend([c] * (m.indptr[c + 1] - m.indptr[c]))
     return np.array(j)
 
 
@@ -639,8 +639,8 @@ def plot_path(
 
     :param sfc: surface filling curve
     :param plot_data: plot the data?
-    :param lat_bounds: latitude bounds (for zooming in)
-    :param lon_bounds: longitude bounds (for zooming in)
+    :param lat_bounds: y-coordinate bounds (for zooming in)
+    :param lon_bounds: x-coordinate bounds (for zooming in)
     :param path_cmap: color map for path
     :param aspect_ratio: aspect ratio of axes
     :param background: background color
@@ -650,13 +650,13 @@ def plot_path(
     :return: plot
     """
     spath = sfc["path"]
-    lat = sfc["lat"]
-    lon = sfc["lon"]
+    y = sfc["y"]
+    x = sfc["x"]
     data = np.transpose(sfc["data"]).ravel()
 
     n = len(spath)
-    path_col = np.floor(spath / len(lat)).astype(int)
-    path_row = (spath % len(lat)).astype(int)
+    path_col = np.floor(spath / len(y)).astype(int)
+    path_row = (spath % len(y)).astype(int)
     ri = path_row[np.arange(n)]
     ci = path_col[np.arange(n)]
     idx = (np.arange(n) * 10 / (n - 1)).astype(int)
@@ -664,28 +664,28 @@ def plot_path(
     p = p9.ggplot()
     p += p9.coord_fixed(ratio=aspect_ratio, xlim=lon_bounds, ylim=lat_bounds)
     if plot_data:
-        la, lo = np.meshgrid(lat, lon)
+        la, lo = np.meshgrid(y, x)
         rst = np.stack([lo.ravel(), la.ravel(), data], axis=1)
-        da = pd.DataFrame({"lon": rst[:, 0], "lat": rst[:, 1],
+        da = pd.DataFrame({"x": rst[:, 0], "y": rst[:, 1],
                            "z": rst[:, 2]}).dropna()
         p += p9.geom_raster(data=da,
-                            mapping=p9.aes(x="lon", y="lat", fill="z"),
+                            mapping=p9.aes(x="x", y="y", fill="z"),
                             show_legend=show_fill_scale)
         p += p9.scale_fill_gradient(low="#222222", high="#a9a9a9")
 
-    df = pd.DataFrame({"lat": lat[ri], "lon": lon[ci], "path": idx})
+    df = pd.DataFrame({"y": y[ri], "x": x[ci], "path": idx})
     if path_cmap is None:
         p += p9.geom_path(data=df,
-                          mapping=p9.aes(x="lon", y="lat"),
+                          mapping=p9.aes(x="x", y="y"),
                           show_legend=False,
                           size=line_width)
     else:
         p += p9.geom_path(data=df,
-                          mapping=p9.aes(x="lon", y="lat", color="path"),
+                          mapping=p9.aes(x="x", y="y", color="path"),
                           show_legend=show_line_scale,
                           size=line_width)
         p += p9.scale_color_cmap(path_cmap)
-    if not sfc["real_coords"]:
+    if not sfc["real_coordinates"]:
         p += p9.theme_void()
     p += p9.theme(
         panel_background=p9.element_rect(fill=background),
