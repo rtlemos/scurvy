@@ -23,8 +23,8 @@ def get_nearest_neighbors(
 
     valid_data_df = sort_valid_data(sfc=sfc)
     ngb = np.array(valid_data_df["id"])
-    lat = np.array(valid_data_df["lat"])
-    lon = np.array(valid_data_df["lon"])
+    y = np.array(valid_data_df["y"])
+    x = np.array(valid_data_df["x"])
     obs = np.array(valid_data_df["obs"])
 
     dist_fun = make_dist_fun(dist_fun_name=dist_fun_name)
@@ -35,7 +35,7 @@ def get_nearest_neighbors(
     for i in range(valid_data_df.shape[0]):
         idx = np.arange(max(0, i - num_neighbors), i)
         neighbors.append(ngb[idx])
-        distances.append(dist_fun(lon[i], lat[i], lon[idx], lat[idx]))
+        distances.append(dist_fun(x[i], y[i], x[idx], y[idx]))
         observations.append(obs[idx])
     return distances, neighbors, observations
 
@@ -47,7 +47,7 @@ def sort_valid_data(
     Provides the id, coordinates, and value of all valid pixels in an image
 
     :param sfc: output of `surface_filling_curve`
-    :return: table of valid pixels with columns "id", "lat", "lon", "obs"
+    :return: table of valid pixels with columns "id", "y", "x", "obs"
     """
 
     is_valid = make_validator(missing_pixel_code=sfc["missing_pixel_code"],
@@ -55,11 +55,11 @@ def sort_valid_data(
 
     m, n = sfc["data"].shape
     valid_data_df = pd.DataFrame([
-        [idx, sfc["lat"][k % m], sfc["lon"][k // m],
+        [idx, sfc["y"][k % m], sfc["x"][k // m],
          sfc["raw_data"][k % m, k // m]]
         for idx, k in enumerate(sfc["path"])
         if is_valid(sfc["raw_data"][k % m, k // m])
-    ], columns=["id", "lat", "lon", "obs"])
+    ], columns=["id", "y", "x", "obs"])
     return valid_data_df
 
 
