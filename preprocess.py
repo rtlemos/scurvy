@@ -290,8 +290,11 @@ def plot_preprocessing(
         data: npt.NDArray,
         y: npt.NDArray = None,
         x: npt.NDArray = None,
+        y_bounds: Tuple[float, float] = None,
+        x_bounds: Tuple[float, float] = None,
         cmap: str = "inferno",
         background_color: str = "white",
+        aspect_ratio: float = 1,
         flip_y: bool = False
 ) -> p9.ggplot:
     """
@@ -301,8 +304,11 @@ def plot_preprocessing(
     :param data: output of `preprocess`
     :param y: y-coordinates (len = raw_data.shape[0])
     :param x: x-coordinates (len = raw_data.shape[1])
+    :param y_bounds: y-coordinate bounds (for zooming in)
+    :param x_bounds: x-coordinate bounds (for zooming in)
     :param cmap: matplotlib colormap
     :param background_color: name of background color
+    :param aspect_ratio: aspect ratio of axes
     :param flip_y: flip the plot vertically?
     :return:
     """
@@ -331,6 +337,7 @@ def plot_preprocessing(
     p += p9.geom_tile(data=df, mapping=p9.aes(x="x", y="y", fill="z"))
     p += p9.scale_fill_cmap(cmap)
     p += p9.facet_grid('. ~ idx')
+    p += p9.coord_fixed(ratio=aspect_ratio, xlim=x_bounds, ylim=y_bounds)
     p += p9.theme(
         panel_background=p9.element_rect(fill=background_color),
         panel_grid_major=p9.element_blank(),
