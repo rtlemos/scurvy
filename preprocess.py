@@ -123,14 +123,14 @@ def remove_water(
     :return: data set similar to input, with some water pixels replaced with
              the 2x2 means of the subsets that they are in
     """
-    m, n = data.shape
-    if m % 2 == 1 or n % 2 == 1:
+    nr, nc = data.shape
+    if nr % 2 == 1 or nc % 2 == 1:
         raise ValueError("dataset must have even number of rows and cols")
     if np.isnan(water):
         if not np.any(np.isnan(data)):
             return data
-        for i in np.arange(0, m, 2):
-            for j in np.arange(0, n, 2):
+        for i in np.arange(0, nr, 2):
+            for j in np.arange(0, nc, 2):
                 if (np.any(np.isnan(data[i:(i + 2), j:(j + 2)])) and
                         np.any(~np.isnan(data[i:(i + 2), j:(j + 2)]))):
                     x = np.nanmean(data[i:(i + 2), j:(j + 2)])
@@ -141,8 +141,8 @@ def remove_water(
     else:
         if not np.any(data == water):
             return data
-        for i in np.arange(0, m, 2):
-            for j in np.arange(0, n, 2):
+        for i in np.arange(0, nr, 2):
+            for j in np.arange(0, nc, 2):
                 if (np.any(data[i:(i + 2), j:(j + 2)] == water) and
                         np.any(data[i:(i + 2), j:(j + 2)] != water)):
                     dt = data[i:(i + 2), j:(j + 2)].ravel()
@@ -158,7 +158,7 @@ def find_islands(
         data: npt.NDArray,
         water: float
 ) -> List[npt.NDArray]:
-    m, n = data.shape
+    nr, nc = data.shape
     delta = [[-1, 0], [1, 0], [0, -1], [0, 1]]  # down, up, left, right
     not_water = make_is_not_water_fn(water)
     dt = np.copy(data)
@@ -167,13 +167,13 @@ def find_islands(
         # adds valid land pixels to list of sought pixels
         search_cells = [[y + d[0], x + d[1]] for d in delta]
         for s in search_cells:
-            if 0 <= s[0] < m and 0 <= s[1] < n and not_water(dt, s):
+            if 0 <= s[0] < nr and 0 <= s[1] < nc and not_water(dt, s):
                 dt[s[0], s[1]] = water
                 seek.append(s)
 
     islands = []
-    for la in range(m):
-        for ln in range(n):
+    for la in range(nr):
+        for ln in range(nc):
             if not_water(dt, [la, ln]):  # new island discovered
                 island = [[la, ln]]
                 seek = []
@@ -237,7 +237,7 @@ def find_connection(
     :return: length + coords of up/down/left/right path that connects 2 islands
     """
 
-    m, n = data.shape
+    nr, nc = data.shape
     not_water = make_is_not_water_fn(water)
 
     connection = {"length": np.inf, "start": np.nan, "end": np.nan}
@@ -253,7 +253,7 @@ def find_connection(
             la, ln = island[idx, :]
             found = False
             sla = la
-            while 0 < sla < m - 1 and not found:
+            while 0 < sla < nr - 1 and not found:
                 sla += delta
                 found = not_water(data, [sla, ln])
             if found:
@@ -273,7 +273,7 @@ def find_connection(
             la, ln = island[idx, :]
             found = False
             sln = ln
-            while 0 < sln < n - 1 and not found:
+            while 0 < sln < nc - 1 and not found:
                 sln += delta
                 found = not_water(data, [la, sln])
             if found:
@@ -288,35 +288,35 @@ def find_connection(
 def plot_preprocessing(
         raw_data: npt.NDArray,
         data: npt.NDArray,
-        lat: npt.NDArray = None,
-        lon: npt.NDArray = None,
+        y: npt.NDArray = None,
+        x: npt.NDArray = None,
         cmap: str = "inferno",
         background_color: str = "white"
 ) -> p9.ggplot:
     """
     Plots raw and processed data side by side, for comparison
-    
-    :param raw_data: original 2D array of data 
+
+    :param raw_data: original 2D array of data
     :param data: output of `preprocess`
-    :param lat: y coordinates (len = raw_data.shape[0])
-    :param lon: x coordinates (len = raw_data.shape[1])
+    :param y: y-coordinates (len = raw_data.shape[0])
+    :param x: x-coordinates (len = raw_data.shape[1])
     :param cmap: matplotlib colormap
     :param background_color: name of background color
-    :return: 
+    :return:
     """
 
-    m, n = raw_data.shape
-    if lat is None or lon is None:
+    nr, nc = raw_data.shape
+    if y is None or x is None:
         no_coordinates = True
-        lat = np.arange(m)
-        lon = np.arange(n)
+        y = np.arange(nr)
+        x = np.arange(nc)
     else:
         no_coordinates = False
 
     def make_df(d, idx):
-        la, lo = np.meshgrid(lat, lon)
-        return pd.DataFrame({"lat": la.ravel(),
-                             "lon": lo.ravel(),
+        la, lo = np.meshgrid(y, x)
+        return pd.DataFrame({"y": la.ravel(),
+                             "x": lo.ravel(),
                              "z": np.transpose(d).ravel(),
                              "idx": idx
                              })
@@ -324,7 +324,7 @@ def plot_preprocessing(
     df = pd.concat([make_df(raw_data, "raw"), make_df(data, "processed")],
                    axis=0)
     p = p9.ggplot()
-    p += p9.geom_tile(data=df, mapping=p9.aes(x="lon", y="lat", fill="z"))
+    p += p9.geom_tile(data=df, mapping=p9.aes(x="x", y="y", fill="z"))
     p += p9.scale_fill_cmap(cmap)
     p += p9.facet_grid('. ~ idx')
     p += p9.theme(
