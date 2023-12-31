@@ -625,32 +625,34 @@ def make_path(
 def plot_path(
         sfc: Dict,
         plot_data: bool = False,
-        lat_bounds: Tuple[float, float] = None,
-        lon_bounds: Tuple[float, float] = None,
+        y_bounds: Tuple[float, float] = None,
+        x_bounds: Tuple[float, float] = None,
         path_cmap: str = "gnuplot2",
         aspect_ratio: float = 1,
         background: str = "white",
         show_line_scale: bool = True,
         show_fill_scale: bool = True,
-        line_width: float = 0.5
+        line_width: float = 0.5,
+        flip_y: bool = False
 ) -> p9.ggplot:
     """
     Plots a path
 
     :param sfc: surface filling curve
     :param plot_data: plot the data?
-    :param lat_bounds: y-coordinate bounds (for zooming in)
-    :param lon_bounds: x-coordinate bounds (for zooming in)
+    :param y_bounds: y-coordinate bounds (for zooming in)
+    :param x_bounds: x-coordinate bounds (for zooming in)
     :param path_cmap: color map for path
     :param aspect_ratio: aspect ratio of axes
     :param background: background color
     :param show_line_scale: display color bar for line?
     :param show_fill_scale: display color bar for fill?
     :param line_width: path line width
+    :param flip_y: flip the plot vertically?
     :return: plot
     """
     spath = sfc["path"]
-    y = sfc["y"]
+    y = np.flip(sfc["y"]) if flip_y else sfc["y"]
     x = sfc["x"]
     data = np.transpose(sfc["data"]).ravel()
 
@@ -662,7 +664,7 @@ def plot_path(
     idx = (np.arange(n) * 10 / (n - 1)).astype(int)
 
     p = p9.ggplot()
-    p += p9.coord_fixed(ratio=aspect_ratio, xlim=lon_bounds, ylim=lat_bounds)
+    p += p9.coord_fixed(ratio=aspect_ratio, xlim=x_bounds, ylim=y_bounds)
     if plot_data:
         la, lo = np.meshgrid(y, x)
         rst = np.stack([lo.ravel(), la.ravel(), data], axis=1)
