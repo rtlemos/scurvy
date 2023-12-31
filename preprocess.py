@@ -291,7 +291,8 @@ def plot_preprocessing(
         y: npt.NDArray = None,
         x: npt.NDArray = None,
         cmap: str = "inferno",
-        background_color: str = "white"
+        background_color: str = "white",
+        flip_y: bool = False
 ) -> p9.ggplot:
     """
     Plots raw and processed data side by side, for comparison
@@ -302,6 +303,7 @@ def plot_preprocessing(
     :param x: x-coordinates (len = raw_data.shape[1])
     :param cmap: matplotlib colormap
     :param background_color: name of background color
+    :param flip_y: flip the plot vertically?
     :return:
     """
 
@@ -312,6 +314,8 @@ def plot_preprocessing(
         x = np.arange(nc)
     else:
         no_coordinates = False
+    if flip_y:
+        y = np.flip(y)
 
     def make_df(d, idx):
         la, lo = np.meshgrid(y, x)
