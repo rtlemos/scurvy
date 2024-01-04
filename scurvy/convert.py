@@ -24,7 +24,7 @@ def convert_df_to_2d_array(
     xdim = get_dim_info(df[x_colname])
     ydim = get_dim_info(df[y_colname])
     data = np.full((ydim["even_n_pixels"], xdim["even_n_pixels"]), np.nan)
-    for k in range(dt.shape[0]):
+    for k in range(df.shape[0]):
         i = int(np.round((df[y_colname][k] - ydim["min"]) / ydim["resolution"]))
         j = int(np.round((df[x_colname][k] - xdim["min"]) / ydim["resolution"]))
         data[i, j] = df[val_colname][k]
