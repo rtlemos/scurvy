@@ -6,7 +6,7 @@ from scipy.sparse import issparse, csc_matrix
 import numba as nb
 import plotnine as p9
 
-from preprocess import preprocess
+from .preprocess import preprocess
 
 
 def surface_filling_curve(
