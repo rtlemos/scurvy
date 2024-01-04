@@ -6,4 +6,4 @@
 
 ### Installation
 
-`pip install git+https://github.com/rtlemos/scurvy.git#egg=scurvy`
+`python -m pip install git+https://github.com/rtlemos/scurvy.git#egg=scurvy`
