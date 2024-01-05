@@ -29,27 +29,27 @@ def sort_df(
     :return: input table, sorted according to surface filling curve
     """
     if sfc is None:
-        data, x, y = convert_df_to_2d_array(
+        data, ydim, xdim = convert_df_to_2d_array(
             df=df, 
             x_colname=x_colname,
             y_colname=y_colname, 
             val_colname=val_colname)
         sfc = surface_filling_curve(
             data=data,
-            y=y,
-            x=x,
+            y=ydim["y"],
+            x=xdim["x"],
             missing_pixel_code=missing_pixel_code,
             invalid_pixel_code=invalid_pixel_code,
             verbose=False)
 
     n_path = len(sfc["path"])
-    path_idx = np.arange(n_path)[sfc["path"].argsort()]
-    i = (np.round((np.array(df[y_colname]) - y[0]) / (y[1] - y[0]))).astype(int)
-    j = (np.round((np.array(df[x_colname]) - x[0]) / (x[1] - x[0]))).astype(int)
-    k = j * sfc["data"].shape[0] + i
-    df['path_idx'] = path_idx[k]
+    scurvy_idx = np.arange(n_path)[sfc["path"].argsort()]
+    i = (np.round((np.array(df[y_colname]) - ydim["min"]) / ydim["resolution"])).astype(int)
+    j = (np.round((np.array(df[x_colname]) - xdim["min"]) / xdim["resolution"])).astype(int)
+    k = j * ydim["n_pixels_even"] + i
+    df['scurvy_idx'] = scurvy_idx[k]
     
-    return augmented_df.sort_values(by="scurvy_idx")
+    return df.sort_values(by="scurvy_idx")
 
 
 def sort_array(
