@@ -46,7 +46,7 @@ def get_scurvy_index(
     scurvy_idx = np.arange(n_path)[sfc["path"].argsort()]
     i = (np.round((np.array(df[y_colname]) - ydim["min"]) / ydim["resolution"])).astype(int)
     j = (np.round((np.array(df[x_colname]) - xdim["min"]) / xdim["resolution"])).astype(int)
-    k = j * ydim["even_n_pixels"] + i
+    k = j * ydim["n_pixels"] + i
     return scurvy_idx[k]
 
 
