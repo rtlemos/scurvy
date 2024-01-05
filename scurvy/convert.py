@@ -53,7 +53,7 @@ def get_gridded_dim_info(ax: npt.NDArray, ax_colname: str) -> Dict:
     resolution = np.median(np.diff(unique_coords))
     mn = unique_coords[0]
     mx = unique_coords[-1]
-    n_pixels = int(np.round((mx - mn) / resolution))
+    n_pixels = int(np.round((mx - mn) / resolution) + 1)
     if n_pixels % 2 == 1:
         mx = unique_coords[-1] + resolution
         n_pixels += 1
