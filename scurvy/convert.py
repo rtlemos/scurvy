@@ -10,7 +10,7 @@ def convert_df_to_2d_array(
   x_colname: str, 
   y_colname: str, 
   val_colname: str
-) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
+) -> Tuple[npt.NDArray, Dict, Dict]:
   
     """
     Converts a dataframe to a 2D array
@@ -32,7 +32,9 @@ def convert_df_to_2d_array(
     dy = 0 if ydim["even_n_pixels"] == ydim["n_pixels"] else ydim["resolution"]
     x = np.linspace(xdim["min"], xdim["max"] + dx, xdim["even_n_pixels"])
     y = np.linspace(ydim["min"], ydim["max"] + dy, ydim["even_n_pixels"])
-    return data, y, x
+    xdim.update({"x": x})
+    ydim.update({"y": y})
+    return data, ydim, xdim
 
 
 def get_dim_info(coords1d: npt.NDArray) -> Dict:
