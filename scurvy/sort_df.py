@@ -7,7 +7,7 @@ from .convert import convert_df_to_2d_array
 from .surface_filling_curve import surface_filling_curve
 
 
-def sort_df(
+def get_scurvy_index(
     df: pd.DataFrame,
     x_colname: str,
     y_colname: str,
@@ -15,9 +15,9 @@ def sort_df(
     missing_pixel_code: float = np.nan,
     invalid_pixel_code: float = np.inf,
     sfc: Dict = None
-) -> pd.DataFrame:
+) -> npt.NDArray:
     """
-    Sorts the rows of a data table using scurvy
+    Provides an array to sort the rows of a data table using scurvy
     
     :param df: table with columns `x_colname`, `y_colname`, and `val_colname`
     :param x_colname: name of table column w/ horizontal coords. (eg longitude)
@@ -26,7 +26,7 @@ def sort_df(
     :param missing_pixel_code: value assigned to missing data pixels
     :param invalid_pixel_code: value assigned to invalid pixels
     :param sfc: output of `surface_filling_curve` applied to `df`
-    :return: input table, sorted according to surface filling curve
+    :return: array of path indices that can be used to sort `df`
     """
     if sfc is None:
         data, ydim, xdim = convert_df_to_2d_array(
@@ -47,9 +47,7 @@ def sort_df(
     i = (np.round((np.array(df[y_colname]) - ydim["min"]) / ydim["resolution"])).astype(int)
     j = (np.round((np.array(df[x_colname]) - xdim["min"]) / xdim["resolution"])).astype(int)
     k = j * ydim["even_n_pixels"] + i
-    df['scurvy_idx'] = scurvy_idx[k]
-    
-    return df.sort_values(by="scurvy_idx")
+    return scurvy_idx[k]
 
 
 def sort_array(
