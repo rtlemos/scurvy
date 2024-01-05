@@ -46,7 +46,7 @@ def sort_df(
     scurvy_idx = np.arange(n_path)[sfc["path"].argsort()]
     i = (np.round((np.array(df[y_colname]) - ydim["min"]) / ydim["resolution"])).astype(int)
     j = (np.round((np.array(df[x_colname]) - xdim["min"]) / xdim["resolution"])).astype(int)
-    k = j * ydim["n_pixels_even"] + i
+    k = j * ydim["even_n_pixels"] + i
     df['scurvy_idx'] = scurvy_idx[k]
     
     return df.sort_values(by="scurvy_idx")
