@@ -27,8 +27,8 @@ def convert_df_to_2d_array(
         xdim = get_gridded_dim_info(df[x_colname], "x")
         ydim = get_gridded_dim_info(df[y_colname], "y")
     else:
-        xdim = get_nongridded_dim_info([df[x_colname, df[y_colname]], "x")
-        ydim = get_nongridded_dim_info([df[y_colname, df[x_colname]], "y")
+        xdim = get_nongridded_dim_info([df[x_colname], df[y_colname]], "x")
+        ydim = get_nongridded_dim_info([df[y_colname], df[x_colname]], "y")
         
     data = np.full((ydim["n_pixels"], xdim["n_pixels"]), np.nan)
     for k in range(df.shape[0]):
