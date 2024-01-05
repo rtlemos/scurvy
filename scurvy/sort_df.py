@@ -48,7 +48,7 @@ def sort_df(
         for idx, k in enumerate(sfc["path"])
     ], columns=["scurvy_idx", y_colname, x_colname])
     augmented_df = pd.merge(left=df,
-                            right=sorted,
+                            right=sorted_df,
                             how="left",
                             on=[y_colname, x_colname])
     
