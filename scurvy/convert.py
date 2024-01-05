@@ -9,7 +9,8 @@ def convert_df_to_2d_array(
   df: pd.DataFrame,
   x_colname: str, 
   y_colname: str, 
-  val_colname: str
+  val_colname: str,
+  regular_spacing: bool
 ) -> Tuple[npt.NDArray, Dict, Dict]:
   
     """
@@ -19,39 +20,62 @@ def convert_df_to_2d_array(
     :param x_colname: name of table column w/ horizontal coords. (eg longitude)
     :param y_colname: name of table column w/ vertical coords. (eg latitude)
     :param val_colname: name of table column w/ property values (eg rainfall)
+    :param regular_spacing: are the data points on a grid?
     :return: n_vert * n_horiz array of property values, x-coords, y-coords 
     """
-    xdim = get_dim_info(df[x_colname])
-    ydim = get_dim_info(df[y_colname])
-    data = np.full((ydim["even_n_pixels"], xdim["even_n_pixels"]), np.nan)
+    if regular_spacing:
+        xdim = get_gridded_dim_info(df[x_colname], "x")
+        ydim = get_gridded_dim_info(df[y_colname], "y")
+    else:
+        xdim = get_nongridded_dim_info([df[x_colname, df[y_colname]], "x")
+        ydim = get_nongridded_dim_info([df[y_colname, df[x_colname]], "y")
+        
+    data = np.full((ydim["n_pixels"], xdim["n_pixels"]), np.nan)
     for k in range(df.shape[0]):
         i = int(np.round((df[y_colname][k] - ydim["min"]) / ydim["resolution"]))
         j = int(np.round((df[x_colname][k] - xdim["min"]) / xdim["resolution"]))
+        # for originally non-gridded data, the next operation obliterates values
+        # that fall on the same grid point (same i, j)
         data[i, j] = df[val_colname][k]
-    dx = 0 if xdim["even_n_pixels"] == xdim["n_pixels"] else xdim["resolution"]
-    dy = 0 if ydim["even_n_pixels"] == ydim["n_pixels"] else ydim["resolution"]
-    x = np.linspace(xdim["min"], xdim["max"] + dx, xdim["even_n_pixels"])
-    y = np.linspace(ydim["min"], ydim["max"] + dy, ydim["even_n_pixels"])
-    xdim.update({"x": x})
-    ydim.update({"y": y})
     return data, ydim, xdim
 
 
-def get_dim_info(coords1d: npt.NDArray) -> Dict:
+def get_gridded_dim_info(ax: npt.NDArray, ax_colname: str) -> Dict:
     """
     Extracts information about one dimension of the dataset (e.g. longitude)
+    This function is used for gridded data
 
-    :param coords1d: dataframe column with information about one dimension
+    :param ax: dataframe column with information about one dimension
+    :param ax_colname: name of dimension
     :return: dict with summary statistics about dimension
     """
-    unique_coords = np.unique(coords1d)
-    nc = len(unique_coords)
-    resolution = np.median(unique_coords[1:nc] - unique_coords[0:(nc - 1)])
-    n_pixels = int(np.round((unique_coords[-1] - unique_coords[0]) / resolution + 1))
-    even_n_pixels = 2 * ((n_pixels + 1) // 2)
-    return {"min": unique_coords[0], 
-            "max": unique_coords[-1], 
+    resolution = np.median(np.diff(np.unique(ax)))
+    mn = unique_coords[0]
+    mx = unique_coords[-1]
+    n_pixels = int(np.round((mx - mn) / resolution))
+    if n_pixels % 2 == 1:
+        mx = unique_coords[-1] + resolution
+        n_pixels += 1
+    return {ax_colname: np.linspace(mn, mx, n_pixels),
+            "min": mn, 
+            "max": mx, 
             "resolution": resolution,
-            "n_pixels": n_pixels, 
-            "even_n_pixels": even_n_pixels}
+            "n_pixels": n_pixels}
+
+
+def get_nongridded_dim_info(ax: List[npt.NDArray], ax_colname) -> Dict:
+    cutp = np.percentile(ax[1], np.linspace(0, 100, 10))
+    resolution = np.median([np.median(np.diff(np.unique(
+        ax[0][(ax[1] > cutp[i]) & (ax[1] <= cutp[i + 1])]
+    ))) for i in range(9)])
+    mn = np.min(ax[0])
+    n_pixels = int(np.ceil((np.max(ax[0]) - mn) / resolution))
+    if n_pixels % 2 == 1:
+        n_pixels += 1
+    mx = mn + n_pixels * res
+    return {ax_colname: np.linspace(mn, mx, n_pixels),
+            "min": mn, 
+            "max": mx, 
+            "resolution": res,
+            "n_pixels": n_pixels}
   
