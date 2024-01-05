@@ -49,7 +49,8 @@ def get_gridded_dim_info(ax: npt.NDArray, ax_colname: str) -> Dict:
     :param ax_colname: name of dimension
     :return: dict with summary statistics about dimension
     """
-    resolution = np.median(np.diff(np.unique(ax)))
+    unique_coords = np.unique(ax)
+    resolution = np.median(np.diff(unique_coords))
     mn = unique_coords[0]
     mx = unique_coords[-1]
     n_pixels = int(np.round((mx - mn) / resolution))
