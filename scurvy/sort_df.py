@@ -1,5 +1,6 @@
 from typing import Dict
 import pandas as pd
+import numpy as np
 
 from .convert import convert_df_to_2d_array
 from .surface_filling_curve import surface_filling_curve
