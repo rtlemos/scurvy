@@ -42,15 +42,12 @@ def sort_df(
             invalid_pixel_code=invalid_pixel_code,
             verbose=False)
 
-    m, n = sfc["data"].shape
-    sorter_df = pd.DataFrame([
-        [idx, sfc["y"][k % m], sfc["x"][k // m]]
-        for idx, k in enumerate(sfc["path"])
-    ], columns=["scurvy_idx", y_colname, x_colname])
-    augmented_df = pd.merge(left=df,
-                            right=sorter_df,
-                            how="left",
-                            on=[y_colname, x_colname])
+    n_path = len(sfc["path"])
+    path_idx = np.arange(n_path)[sfc["path"].argsort()]
+    i = (np.round((np.array(df[y_colname]) - y[0]) / (y[1] - y[0]))).astype(int)
+    j = (np.round((np.array(df[x_colname]) - x[0]) / (x[1] - x[0]))).astype(int)
+    k = j * sfc["data"].shape[0] + i
+    df['path_idx'] = path_idx[k]
     
     return augmented_df.sort_values(by="scurvy_idx")
 
