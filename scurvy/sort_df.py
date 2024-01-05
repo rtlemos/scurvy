@@ -1,4 +1,5 @@
 from typing import Dict
+import numpy.typing as npt
 import pandas as pd
 import numpy as np
 
