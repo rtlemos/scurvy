@@ -77,6 +77,6 @@ def get_nongridded_dim_info(ax: List[npt.NDArray], ax_colname) -> Dict:
     return {ax_colname: np.linspace(mn, mx, n_pixels),
             "min": mn, 
             "max": mx, 
-            "resolution": res,
+            "resolution": resolution,
             "n_pixels": n_pixels}
   
