@@ -11,7 +11,6 @@ def preprocess(
         raw_data: npt.NDArray,
         missing_pixel_code: float,
         invalid_pixel_code: float,
-        scipy_interpolation_method: str = "nearest",
         verbose: bool = False
 ) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
     """
@@ -21,7 +20,6 @@ def preprocess(
     :param raw_data: 2D matrix of values
     :param missing_pixel_code: code that denotes missing data
     :param invalid_pixel_code: code for invalid pixels (no interpolation)
-    :param scipy_interpolation_method: one of "nearest", "linear", "bicubic"
     :param verbose: log to console?
     :return: processed data set and masks for missing and invalid values
     """
@@ -32,8 +30,7 @@ def preprocess(
 
     imputed_data, missing_mask = interpolate_missing_pixels(
         raw_data=raw_data,
-        missing_pixel_code=missing_pixel_code,
-        scipy_interpolation_method=scipy_interpolation_method
+        missing_pixel_code=missing_pixel_code
     )
     recoded_data = recode(
         data=imputed_data,
@@ -54,34 +51,36 @@ def preprocess(
 
 def interpolate_missing_pixels(
         raw_data: npt.NDArray,
-        missing_pixel_code: float,
-        scipy_interpolation_method: str = 'nearest',
-        fill_value: float = None
+        missing_pixel_code: float
 ) -> Tuple[npt.NDArray, npt.NDArray]:
     """
-    Imputes missing pixels using a scipy method
+    Imputes missing pixels using scipy's methods
 
     :param raw_data: 2D data set with missing pixels
     :param missing_pixel_code: code for missing pixels
-    :param scipy_interpolation_method: 'nearest', 'linear' or 'cubic'
-    :param fill_value: default interpolation value outside the
-        convex hull of valid pixels (for 'linear' and 'cubic')
     :return: data set with missing values filled in, and missing mask
     """
 
     j, i = np.meshgrid(np.arange(raw_data.shape[1]),
                        np.arange(raw_data.shape[0]))
     data = raw_data.copy()
-    if np.isnan(missing_pixel_code):
-        missing_mask = np.isnan(raw_data)
-    else:
-        missing_mask = raw_data == missing_pixel_code
-    data[i[missing_mask], j[missing_mask]] = interpolate.griddata(
-        points=(j[~missing_mask], i[~missing_mask]),
-        values=data[~missing_mask],
-        xi=(j[missing_mask], i[missing_mask]),
-        method=scipy_interpolation_method,
-        fill_value=np.nanmean(raw_data) if fill_value is None else fill_value)
+
+    # 2 rounds of Scipy interpolation: cubic for central NAs, 
+    # then nearest neighbor for corners
+    for k, interpolation_method in enumerate(["cubic", "nearest"]):
+        if np.isnan(missing_pixel_code):
+            mask = np.isnan(data)
+        else:
+            mask = data == missing_pixel_code
+        if k == 0:
+            missing_mask = np.copy(mask)                           
+        if np.any(mask):
+            data[i[mask], j[mask]] = interpolate.griddata(
+                points=(j[~mask], i[~mask]),
+                values=data[~mask],
+                xi=(j[mask], i[mask]),
+                method=interpolation_method,
+                fill_value=missing_pixel_code)
     return data, missing_mask
 
 
