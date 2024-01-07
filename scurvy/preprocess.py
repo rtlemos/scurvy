@@ -27,6 +27,15 @@ def preprocess(
     if missing_pixel_code == invalid_pixel_code:
         raise ValueError(
             "missing_pixel_code can't be equal to invalid_pixel_code")
+    for code, kind in zip([missing_pixel_code, invalid_pixel_code],
+                          ["missing", "invalid"]:
+        if np.isnan(code):
+            all_bad = np.all(np.isnan(raw_data))
+        else:
+            all_bad = np.all(raw_data == code)
+        if all_bad:
+            raise ValueError(
+                "Cannot preprocess: all data in raw_data are " + kind)
 
     imputed_data, missing_mask = interpolate_missing_pixels(
         raw_data=raw_data,
