@@ -28,7 +28,7 @@ def preprocess(
         raise ValueError(
             "missing_pixel_code can't be equal to invalid_pixel_code")
     for code, kind in zip([missing_pixel_code, invalid_pixel_code],
-                          ["missing", "invalid"]:
+                          ["missing", "invalid"]):
         if np.isnan(code):
             all_bad = np.all(np.isnan(raw_data))
         else:
