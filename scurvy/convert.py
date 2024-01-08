@@ -21,7 +21,7 @@ def convert_df_to_2d_array(
     :param y_colname: name of table column w/ vertical coords. (eg latitude)
     :param val_colname: name of table column w/ property values (eg rainfall)
     :param regular_spacing: are the data points on a grid?
-    :return: n_vert * n_horiz array of property values, x-coords, y-coords 
+    :return: n_vert * n_horiz array of property values, y-coords, x-coords
     """
     if regular_spacing:
         xdim = get_gridded_dim_info(df[x_colname], "x")
