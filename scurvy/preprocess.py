@@ -103,7 +103,7 @@ def interpolate_missing_pixels(
                 mask = np.isnan(data)
             else:
                 mask = data == missing_pixel_code
-    data[invalid_mask] = invalid_pixel_code
+    #data[invalid_mask] = invalid_pixel_code
     return data, missing_mask
 
 
