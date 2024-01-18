@@ -39,7 +39,8 @@ def preprocess(
 
     imputed_data, missing_mask = interpolate_missing_pixels(
         raw_data=raw_data,
-        missing_pixel_code=missing_pixel_code
+        missing_pixel_code=missing_pixel_code,
+        invalid_pixel_code=invalid_pixel_code
     )
     recoded_data = recode(
         data=imputed_data,
@@ -60,29 +61,37 @@ def preprocess(
 
 def interpolate_missing_pixels(
         raw_data: npt.NDArray,
-        missing_pixel_code: float
+        missing_pixel_code: float,
+        invalid_pixel_code: float
 ) -> Tuple[npt.NDArray, npt.NDArray]:
     """
     Imputes missing pixels using scipy's methods
 
     :param raw_data: 2D data set with missing pixels
     :param missing_pixel_code: code for missing pixels
+    :param invalid_pixel_code: code for invalid pixels (no interpolation)
     :return: data set with missing values filled in, and missing mask
     """
 
     j, i = np.meshgrid(np.arange(raw_data.shape[1]),
                        np.arange(raw_data.shape[0]))
-    data = raw_data.copy()
-
+    if np.isnan(invalid_pixel_code):
+        invalid_mask = np.isnan(raw_data)
+    else:
+        invalid_mask = raw_data == invalid_pixel_code
+    
+    if np.isnan(missing_pixel_code):
+        missing_mask = np.isnan(raw_data)
+    else:
+        missing_mask = raw_data == missing_pixel_code
+        
+    data = np.copy(raw_data)
+    mask = np.copy(missing_mask)
+    
     # 2 rounds of Scipy interpolation: cubic for central NAs, 
     # then nearest neighbor for corners
+    data[invalid_mask] = missing_pixel_code
     for k, interpolation_method in enumerate(["cubic", "nearest"]):
-        if np.isnan(missing_pixel_code):
-            mask = np.isnan(data)
-        else:
-            mask = data == missing_pixel_code
-        if k == 0:
-            missing_mask = np.copy(mask)                           
         if np.any(mask):
             data[i[mask], j[mask]] = interpolate.griddata(
                 points=(j[~mask], i[~mask]),
@@ -90,6 +99,11 @@ def interpolate_missing_pixels(
                 xi=(j[mask], i[mask]),
                 method=interpolation_method,
                 fill_value=missing_pixel_code)
+            if np.isnan(missing_pixel_code):
+                mask = np.isnan(data)
+            else:
+                mask = data == missing_pixel_code
+    data[invalid_mask] = invalid_pixel_code
     return data, missing_mask
 
 
