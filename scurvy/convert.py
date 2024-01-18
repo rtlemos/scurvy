@@ -10,7 +10,8 @@ def convert_df_to_2d_array(
   x_colname: str, 
   y_colname: str, 
   val_colname: str,
-  regular_spacing: bool
+  regular_spacing: bool,
+  empty_value: float = np.inf
 ) -> Tuple[npt.NDArray, Dict, Dict]:
   
     """
@@ -21,6 +22,7 @@ def convert_df_to_2d_array(
     :param y_colname: name of table column w/ vertical coords. (eg latitude)
     :param val_colname: name of table column w/ property values (eg rainfall)
     :param regular_spacing: are the data points on a grid?
+    :param fill_value: value used to fill empty pixels
     :return: n_vert * n_horiz array of property values, y-coords, x-coords
     """
     if regular_spacing:
@@ -30,7 +32,7 @@ def convert_df_to_2d_array(
         xdim = get_nongridded_dim_info([df[x_colname], df[y_colname]], "x")
         ydim = get_nongridded_dim_info([df[y_colname], df[x_colname]], "y")
         
-    data = np.full((ydim["n_pixels"], xdim["n_pixels"]), np.nan)
+    data = np.full((ydim["n_pixels"], xdim["n_pixels"]), empty_value)
     for k in range(df.shape[0]):
         i = int(np.round((df[y_colname][k] - ydim["min"]) / ydim["resolution"]))
         j = int(np.round((df[x_colname][k] - xdim["min"]) / xdim["resolution"]))
