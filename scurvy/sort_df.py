@@ -7,7 +7,7 @@ from .convert import convert_df_to_2d_array
 from .surface_filling_curve import surface_filling_curve
 
 
-def get_scurvy_index(
+def sort_df(
     df: pd.DataFrame,
     x_colname: str,
     y_colname: str,
@@ -15,10 +15,12 @@ def get_scurvy_index(
     regular_spacing: bool,
     missing_pixel_code: float = np.nan,
     invalid_pixel_code: float = np.inf,
-    sfc: Dict = None
-) -> npt.NDArray:
+    sfc: Dict = None,
+    other_colnames: List[str] = None
+    other_defaults: List = None
+) -> pd.DataFrame:
     """
-    Provides an array to sort the rows of a data table using scurvy
+    Sorts the rows of a data table using scurvy
     
     :param df: table with columns `x_colname`, `y_colname`, and `val_colname`
     :param x_colname: name of table column w/ horizontal coords. (eg longitude)
@@ -28,7 +30,13 @@ def get_scurvy_index(
     :param missing_pixel_code: value assigned to missing data pixels
     :param invalid_pixel_code: value assigned to invalid pixels
     :param sfc: output of `surface_filling_curve` applied to `df`
-    :return: array of path indices that can be used to sort `df`
+    :param other_colnames: additional names of columns to keep in sorted table
+    :param other_defaults: default values for additional columns
+    :return: sorted table with `x_colname`, `y_colname`, and `val_colname`;
+             if df has invalid values, then the number of rows of the output
+             table may exceed that of the input table; if so, the values of
+             other_colnames will equal the defaults provided
+             (or NaN if other_defaults is not provided)
     """
     if sfc is None:
         data, ydim, xdim = convert_df_to_2d_array(
@@ -45,12 +53,36 @@ def get_scurvy_index(
             invalid_pixel_code=invalid_pixel_code,
             verbose=False)
 
-    n_path = len(sfc["path"])
-    scurvy_idx = np.arange(n_path)[sfc["path"].argsort()]
-    i = (np.round((np.array(df[y_colname]) - ydim["min"]) / ydim["resolution"])).astype(int)
-    j = (np.round((np.array(df[x_colname]) - xdim["min"]) / xdim["resolution"])).astype(int)
-    k = j * ydim["n_pixels"] + i
-    return scurvy_idx[k]
+    i = sfc["path"] % len(sfc["y"])
+    j = sfc["path"] // len(sfc["y"])
+    dd = pd.DataFrame({
+        "idx": np.arange(len(i)),
+        x_colname: j * ydim["resolution"] + xdim["min"],
+        y_colname: i * xdim["resolution"] + ydim["min"],
+        val_colname: sfc["data"][i, j]
+    })
+    
+    if other_colnames is not None:
+        if other_defaults is None:
+            other_defaults = [np.NaN] * len(other_colnames)
+        
+        if len(other_colnames) != len(other_defaults):
+            raise ValueError(
+                "`other_colnames` must have the same length as `other_defaults`")
+        
+        nearest = []
+        for x, y in zip(dd[x_colname], dd[y_colname]):
+            k = np.argmin((x - df[x_colname])**2 + (y - df[y_colname])**2)
+            dx = np.abs(x - df[x_colname][k])
+            dy = np.abs(y - df[y_colname][k])
+            if dx <= xdim["resolution"] and dy <= ydim["resolution"]:
+                nearest.append(k)
+            else:
+                nearest.append(-1)
+        for colname, default in zip(other_colnames, other_defaults):
+            dd[colname] = [df.loc[k, colname] if k > -1 else default
+                           for k in nearest]
+    return dd
 
 
 def sort_array(
