@@ -62,7 +62,7 @@ def sort_df(
         val_colname: sfc["data"][i, j]
     })
     
-    if other_colnames is not None:
+    if other_colnames is not None and len(other_colnames) > 0:
         if other_defaults is None:
             other_defaults = [np.NaN] * len(other_colnames)
         
