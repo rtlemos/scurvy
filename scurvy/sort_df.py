@@ -94,7 +94,7 @@ def sort_array(
     missing_pixel_code: float = np.nan,
     invalid_pixel_code: float = np.inf,
     sfc: Dict = None
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, Dict]:
     """
     Sorts the pixels in a 2D array using surface filling curves
     
@@ -105,7 +105,8 @@ def sort_array(
     :param missing_pixel_code: value assigned to missing data pixels
     :param invalid_pixel_code: value assigned to invalid pixels
     :param sfc: output of `surface_filling_curve` applied to `data`
-    :return: table with rows sorted according to surface filling curve
+    :return: (1) table with rows sorted according to surface filling curve;
+             (2) surface filling curve dict
     """
     if sfc is None:
         sfc = surface_filling_curve(
@@ -132,4 +133,4 @@ def sort_array(
         for idx, k in enumerate(sfc["path"])
     ], columns=["scurvy_idx", y_colname, x_colname])
 
-    return sorted_df
+    return sorted_df, sfc
