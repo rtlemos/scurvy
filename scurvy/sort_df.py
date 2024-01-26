@@ -16,7 +16,7 @@ def sort_df(
     missing_pixel_code: float = np.nan,
     invalid_pixel_code: float = np.inf,
     sfc: Dict = None,
-    other_colnames: List[str] = None
+    other_colnames: List[str] = None,
     other_defaults: List = None
 ) -> pd.DataFrame:
     """
