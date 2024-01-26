@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import numpy.typing as npt
 import pandas as pd
 import numpy as np
@@ -18,7 +18,7 @@ def sort_df(
     sfc: Dict = None,
     other_colnames: List[str] = None,
     other_defaults: List = None
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, Dict]:
     """
     Sorts the rows of a data table using scurvy
     
@@ -32,8 +32,9 @@ def sort_df(
     :param sfc: output of `surface_filling_curve` applied to `df`
     :param other_colnames: additional names of columns to keep in sorted table
     :param other_defaults: default values for additional columns
-    :return: sorted table with `x_colname`, `y_colname`, and `val_colname`;
-             if df has invalid values, then the number of rows of the output
+    :return: (1) sorted table with `x_colname`, `y_colname`, and `val_colname`;
+             (2) surface filling curve object.
+             If df has invalid values, then the number of rows of the output
              table may exceed that of the input table; if so, the values of
              other_colnames will equal the defaults provided
              (or NaN if other_defaults is not provided)
@@ -82,7 +83,7 @@ def sort_df(
         for colname, default in zip(other_colnames, other_defaults):
             dd[colname] = [df.loc[k, colname] if k > -1 else default
                            for k in nearest]
-    return dd
+    return dd, sfc
 
 
 def sort_array(
