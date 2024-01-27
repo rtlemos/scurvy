@@ -37,7 +37,7 @@ def sort_df(
              If df has invalid values, then the number of rows of the output
              table may exceed that of the input table; if so, the values of
              other_colnames will equal the defaults provided
-             (or NaN if other_defaults is not provided)
+             (if other_defaults is not provided, the table is not augmented)
     """
     if sfc is None:
         data, ydim, xdim = convert_df_to_2d_array(
@@ -64,10 +64,8 @@ def sort_df(
     })
     
     if other_colnames is not None and len(other_colnames) > 0:
-        if other_defaults is None:
-            other_defaults = [np.NaN] * len(other_colnames)
-        
-        if len(other_colnames) != len(other_defaults):
+        if other_defaults is not None and \
+        len(other_colnames) != len(other_defaults):
             raise ValueError(
                 "`other_colnames` must have the same length as `other_defaults`")
         
@@ -80,9 +78,14 @@ def sort_df(
                 nearest.append(k)
             else:
                 nearest.append(-1)
-        for colname, default in zip(other_colnames, other_defaults):
-            dd[colname] = [df.loc[k, colname] if k > -1 else default
-                           for k in nearest]
+        if other_defaults is None:
+            dd = dd[nearest != -1]
+            for colname in other_colnames:
+                dd[colname] = [df.loc[k, colname] for k in nearest]
+        else:
+            for colname, default in zip(other_colnames, other_defaults):
+                dd[colname] = [df.loc[k, colname] if k > -1 else default
+                               for k in nearest]
     return dd, sfc
 
 
