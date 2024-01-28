@@ -79,7 +79,7 @@ def sort_df(
             else:
                 nearest.append(-1)
         if other_defaults is None:
-            dd = dd[nearest != -1]
+            dd = dd[np.array(nearest) != -1]
             for colname in other_colnames:
                 dd[colname] = [df.loc[k, colname] for k in nearest]
         else:
