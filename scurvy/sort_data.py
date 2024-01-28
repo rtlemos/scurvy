@@ -79,12 +79,14 @@ def sort_df(
             else:
                 nearest.append(-1)
         if other_defaults is None:
-            dd = dd[np.array(nearest) != -1]
+            nearest = np.array(nearest)
+            crit = nearest != -1
+            dd = dd[crit]
             for colname in other_colnames:
-                dd[colname] = [df.loc[k, colname] for k in nearest]
+                dd[colname] = [df.loc[k, colname] for k in nearest[crit]]
         else:
             for colname, default in zip(other_colnames, other_defaults):
-                dd[colname] = [df.loc[k, colname] if k > -1 else default
+                dd[colname] = [df.loc[k, colname] if k != -1 else default
                                for k in nearest]
     return dd, sfc
 
