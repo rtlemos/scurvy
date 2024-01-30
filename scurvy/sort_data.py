@@ -58,8 +58,8 @@ def sort_df(
     j = sfc["path"] // len(sfc["y"])
     dd = pd.DataFrame({
         "idx": np.arange(len(i)),
-        x_colname: j * ydim["resolution"] + xdim["min"],
-        y_colname: i * xdim["resolution"] + ydim["min"],
+        x_colname: j * xdim["resolution"] + xdim["min"],
+        y_colname: i * ydim["resolution"] + ydim["min"],
         val_colname: sfc["raw_data"][i, j]
     })
     
