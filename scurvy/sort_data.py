@@ -56,11 +56,17 @@ def sort_df(
 
     i = sfc["path"] % len(sfc["y"])
     j = sfc["path"] // len(sfc["y"])
+    z = sfc["raw_data"][i, j]
+    if np.isnan(invalid_pixel_code):
+        z[np.isnan(z)] = missing_pixel_code
+    else:
+        z[z == invalid_pixel_code] = missing_pixel_code
+    
     dd = pd.DataFrame({
         "idx": np.arange(len(i)),
         x_colname: j * xdim["resolution"] + xdim["min"],
         y_colname: i * ydim["resolution"] + ydim["min"],
-        val_colname: sfc["raw_data"][i, j]
+        val_colname: z
     })
     
     if other_colnames is not None and len(other_colnames) > 0:
