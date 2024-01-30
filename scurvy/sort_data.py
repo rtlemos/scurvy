@@ -60,7 +60,7 @@ def sort_df(
         "idx": np.arange(len(i)),
         x_colname: j * ydim["resolution"] + xdim["min"],
         y_colname: i * xdim["resolution"] + ydim["min"],
-        val_colname: sfc["raw_data"][i, j]
+        val_colname: sfc["data"][i, j]
     })
     
     if other_colnames is not None and len(other_colnames) > 0:
