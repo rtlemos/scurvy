@@ -66,11 +66,17 @@ def get_gridded_dim_info(ax: npt.NDArray, ax_colname: str) -> Dict:
             "n_pixels": n_pixels}
 
 
-def get_nongridded_dim_info(ax: List[npt.NDArray], ax_colname) -> Dict:
+def get_nongridded_dim_info(
+  ax: List[npt.NDArray], 
+  ax_colname: str,
+  max_num_cells: int = 1000
+) -> Dict:
     cutp = np.percentile(ax[1], np.linspace(0, 100, 10))
-    resolution = np.median([np.median(np.diff(np.unique(
+    min_resolution = np.ptp(ax[0]) / max_num_cells
+    data_resolution = np.median([np.median(np.diff(np.unique(
         ax[0][(ax[1] > cutp[i]) & (ax[1] <= cutp[i + 1])]
     ))) for i in range(9)])
+    resolution = max(data_resolution, min_resolution)
     mn = np.min(ax[0])
     n_pixels = int(np.ceil((np.max(ax[0]) - mn) / resolution))
     if n_pixels % 2 == 1:
