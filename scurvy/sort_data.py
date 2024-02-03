@@ -45,6 +45,7 @@ def sort_df(
              (if other_defaults is not provided, the table is not augmented)
     """
     if sfc is None:
+        
         data, ydim, xdim = convert_df_to_2d_array(
             df=df, 
             x_colname=x_colname,
@@ -52,7 +53,8 @@ def sort_df(
             val_colname=val_colname,
             regular_spacing=regular_spacing,
             max_num_1d_cells=max_num_1d_cells,
-            empty_means_missing=empty_means_missing
+            empty_value=missing_pixel_code if empty_means_missing \
+                else invalid_pixel_code
         )
         sfc = surface_filling_curve(
             data=data,
