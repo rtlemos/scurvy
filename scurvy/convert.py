@@ -81,7 +81,7 @@ def get_nongridded_dim_info(
     n_pixels = int(np.ceil((np.max(ax[0]) - mn) / resolution))
     if n_pixels % 2 == 1:
         n_pixels += 1
-    mx = mn + n_pixels * resolution
+    mx = mn + (n_pixels - 1) * resolution
     return {ax_colname: np.linspace(mn, mx, n_pixels),
             "min": mn, 
             "max": mx, 
