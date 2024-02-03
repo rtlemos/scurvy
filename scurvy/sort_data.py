@@ -16,6 +16,7 @@ def sort_df(
     max_num_1d_cells: int = 300,
     missing_pixel_code: float = np.nan,
     invalid_pixel_code: float = np.inf,
+    empty_means_missing: bool = True,
     sfc: Dict = None,
     other_colnames: List[str] = None,
     other_defaults: List = None
@@ -32,6 +33,7 @@ def sort_df(
            (only used if regular_spacing = False)
     :param missing_pixel_code: value assigned to missing data pixels
     :param invalid_pixel_code: value assigned to invalid pixels
+    :param empty_means_missing: are empty pixels missing (or invalid)?
     :param sfc: output of `surface_filling_curve` applied to `df`
     :param other_colnames: additional names of columns to keep in sorted table
     :param other_defaults: default values for additional columns
@@ -49,7 +51,9 @@ def sort_df(
             y_colname=y_colname, 
             val_colname=val_colname,
             regular_spacing=regular_spacing,
-            max_num_1d_cells=max_num_1d_cells)
+            max_num_1d_cells=max_num_1d_cells,
+            empty_means_missing=empty_means_missing
+        )
         sfc = surface_filling_curve(
             data=data,
             y=ydim["y"],
