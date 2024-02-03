@@ -72,7 +72,7 @@ def get_nongridded_dim_info(
   max_num_cells: int = 1000
 ) -> Dict:
     cutp = np.percentile(ax[1], np.linspace(0, 100, 10))
-    min_resolution = np.ptp(ax[0]) / max_num_cells
+    min_resolution = np.ptp(ax[0]) / (max_num_cells - 1)
     data_resolution = np.median([np.median(np.diff(np.unique(
         ax[0][(ax[1] > cutp[i]) & (ax[1] <= cutp[i + 1])]
     ))) for i in range(9)])
@@ -81,7 +81,7 @@ def get_nongridded_dim_info(
     n_pixels = int(np.ceil((np.max(ax[0]) - mn) / resolution))
     if n_pixels % 2 == 1:
         n_pixels += 1
-    mx = mn + (n_pixels - 1) * resolution
+    mx = mn + n_pixels * resolution
     return {ax_colname: np.linspace(mn, mx, n_pixels),
             "min": mn, 
             "max": mx, 
