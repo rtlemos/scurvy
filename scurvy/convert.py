@@ -34,8 +34,8 @@ def convert_df_to_2d_array(
         
     data = np.full((ydim["n_pixels"], xdim["n_pixels"]), empty_value)
     for k in range(df.shape[0]):
-        i = int(np.round((df[y_colname][k] - ydim["min"]) / ydim["resolution"]))
-        j = int(np.round((df[x_colname][k] - xdim["min"]) / xdim["resolution"]))
+        i = int((df[y_colname][k] - ydim["min"]) / ydim["resolution"])
+        j = int((df[x_colname][k] - xdim["min"]) / xdim["resolution"])
         # for originally non-gridded data, the next operation obliterates values
         # that fall on the same grid point (same i, j)
         data[i, j] = df[val_colname][k]
