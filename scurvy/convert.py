@@ -11,7 +11,8 @@ def convert_df_to_2d_array(
   y_colname: str, 
   val_colname: str,
   regular_spacing: bool,
-  empty_value: float = np.inf
+  max_num_1d_cells: int = 300,
+  empty_value: float = np.inf,
 ) -> Tuple[npt.NDArray, Dict, Dict]:
   
     """
@@ -22,6 +23,7 @@ def convert_df_to_2d_array(
     :param y_colname: name of table column w/ vertical coords. (eg latitude)
     :param val_colname: name of table column w/ property values (eg rainfall)
     :param regular_spacing: are the data points on a grid?
+    :param max_num_1d_cells: maximum number of cells in one dimension (x or y)
     :param fill_value: value used to fill empty pixels
     :return: n_vert * n_horiz array of property values, y-coords, x-coords
     """
@@ -29,8 +31,10 @@ def convert_df_to_2d_array(
         xdim = get_gridded_dim_info(df[x_colname], "x")
         ydim = get_gridded_dim_info(df[y_colname], "y")
     else:
-        xdim = get_nongridded_dim_info([df[x_colname], df[y_colname]], "x")
-        ydim = get_nongridded_dim_info([df[y_colname], df[x_colname]], "y")
+        xdim = get_nongridded_dim_info([df[x_colname], df[y_colname]], "x",
+                                      max_num_1d_cells)
+        ydim = get_nongridded_dim_info([df[y_colname], df[x_colname]], "y",
+                                      max_num_1d_cells)
         
     data = np.full((ydim["n_pixels"], xdim["n_pixels"]), empty_value)
     for k in range(df.shape[0]):
@@ -69,10 +73,10 @@ def get_gridded_dim_info(ax: npt.NDArray, ax_colname: str) -> Dict:
 def get_nongridded_dim_info(
   ax: List[npt.NDArray], 
   ax_colname: str,
-  max_num_cells: int = 1000
+  max_num_1d_cells: int
 ) -> Dict:
     cutp = np.percentile(ax[1], np.linspace(0, 100, 10))
-    min_resolution = np.ptp(ax[0]) / (max_num_cells - 1)
+    min_resolution = np.ptp(ax[0]) / (max_num_1d_cells - 1)
     data_resolution = np.median([np.median(np.diff(np.unique(
         ax[0][(ax[1] > cutp[i]) & (ax[1] <= cutp[i + 1])]
     ))) for i in range(9)])
