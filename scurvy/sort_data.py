@@ -13,6 +13,7 @@ def sort_df(
     y_colname: str,
     val_colname: str,
     regular_spacing: bool,
+    max_num_1d_cells: int = 300,
     missing_pixel_code: float = np.nan,
     invalid_pixel_code: float = np.inf,
     sfc: Dict = None,
@@ -27,6 +28,8 @@ def sort_df(
     :param y_colname: name of table column w/ vertical coords. (eg latitude)
     :param val_colname: name of table column w/ property values (eg rainfall)
     :param regular_spacing: are the data points on a grid?
+    :param max_num_1d_cells: maximum number of cells in 1 dimension (x or y)
+           (only used if regular_spacing = False)
     :param missing_pixel_code: value assigned to missing data pixels
     :param invalid_pixel_code: value assigned to invalid pixels
     :param sfc: output of `surface_filling_curve` applied to `df`
@@ -45,7 +48,8 @@ def sort_df(
             x_colname=x_colname,
             y_colname=y_colname, 
             val_colname=val_colname,
-            regular_spacing=regular_spacing)
+            regular_spacing=regular_spacing,
+            max_num_1d_cells=max_num_1d_cells)
         sfc = surface_filling_curve(
             data=data,
             y=ydim["y"],
