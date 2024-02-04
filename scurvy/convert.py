@@ -38,6 +38,7 @@ def convert_df_to_2d_array(
         
     data = np.zeros((ydim["n_pixels"], xdim["n_pixels"]))
     cnt = np.zeros((ydim["n_pixels"], xdim["n_pixels"]))
+    emp = np.fill((ydim["n_pixels"], xdim["n_pixels"]), fill_value=empty_value)
     for k in range(df.shape[0]):
         i = int(np.floor((df[y_colname][k] - ydim["min"]) / ydim["resolution"]))
         j = int(np.floor((df[x_colname][k] - xdim["min"]) / xdim["resolution"]))
@@ -45,7 +46,7 @@ def convert_df_to_2d_array(
         # that fall on the same grid point (same i, j)
         data[i, j] += df[val_colname][k]
         cnt[i, j] += 1
-    data = np.where(cnt > 0, data / cnt, empty_value)
+    data = np.divide(data, cnt, out=emp, where=count > 0)
     return data, ydim, xdim
 
 
