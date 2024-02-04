@@ -46,7 +46,7 @@ def convert_df_to_2d_array(
         # that fall on the same grid point (same i, j)
         data[i, j] += df[val_colname][k]
         cnt[i, j] += 1
-    data = np.divide(data, cnt, out=emp, where=count > 0)
+    data = np.divide(data, cnt, out=emp, where=cnt > 0)
     return data, ydim, xdim
 
 
