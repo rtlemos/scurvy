@@ -36,13 +36,16 @@ def convert_df_to_2d_array(
         ydim = get_nongridded_dim_info([df[y_colname], df[x_colname]], "y",
                                       max_num_1d_cells)
         
-    data = np.full((ydim["n_pixels"], xdim["n_pixels"]), empty_value)
+    data = np.zeros((ydim["n_pixels"], xdim["n_pixels"]))
+    cnt = np.zeros((ydim["n_pixels"], xdim["n_pixels"]))
     for k in range(df.shape[0]):
         i = int(np.floor((df[y_colname][k] - ydim["min"]) / ydim["resolution"]))
         j = int(np.floor((df[x_colname][k] - xdim["min"]) / xdim["resolution"]))
         # for originally non-gridded data, the next operation obliterates values
         # that fall on the same grid point (same i, j)
-        data[i, j] = df[val_colname][k]
+        data[i, j] += df[val_colname][k]
+        cnt[i, j] += 1
+    data = np.where(cnt > 0, data / cnt, empty_value)
     return data, ydim, xdim
 
 
