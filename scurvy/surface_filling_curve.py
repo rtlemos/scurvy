@@ -633,6 +633,7 @@ def plot_path(
         show_line_scale: bool = True,
         show_fill_scale: bool = True,
         line_width: float = 0.5,
+        fill_colors: Tuple[str, str] = ["#222222", "#a9a9a9"],
         flip_y: bool = False
 ) -> p9.ggplot:
     """
@@ -648,6 +649,7 @@ def plot_path(
     :param show_line_scale: display color bar for line?
     :param show_fill_scale: display color bar for fill?
     :param line_width: path line width
+    :param fill_colors: gradient colors for tiles
     :param flip_y: flip the plot vertically?
     :return: plot
     """
@@ -673,7 +675,8 @@ def plot_path(
         p += p9.geom_raster(data=da,
                             mapping=p9.aes(x="x", y="y", fill="z"),
                             show_legend=show_fill_scale)
-        p += p9.scale_fill_gradient(low="#222222", high="#a9a9a9")
+        p += p9.scale_fill_gradient(low=fill_colors[0], 
+                                    high=fill_colors[1])
 
     df = pd.DataFrame({"y": y[ri], "x": x[ci], "path": idx})
     if path_cmap is None:
